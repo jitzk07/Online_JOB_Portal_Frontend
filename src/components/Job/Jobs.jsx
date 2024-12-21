@@ -56,9 +56,9 @@ const Jobs = () => {
 
   return (
     <section className="jobs page">
-      <div className="container">
+      <div className="container ">
         <h1>ALL AVAILABLE JOBS</h1>
-        <div className="banner">
+        <div className="banner ">
           {jobs.map((job) => (
             <div className="card" key={job._id}>
               <p>

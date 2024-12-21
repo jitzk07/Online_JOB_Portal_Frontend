@@ -8,24 +8,24 @@ import { useNavigate } from "react-router-dom";
 import ResumeModal from "./ResumeModal";
 
 const MyApplications = () => {
-  const { user } = useContext(Context);
+  const { user, isAuthorized } = useContext(Context);
   const [applications, setApplications] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [resumeImageUrl, setResumeImageUrl] = useState("");
   const navigateTo = useNavigate();
 
   useEffect(() => {
-    if (!user) {
-      navigateTo("/"); // Redirect if the user is not logged in
+    // Redirect unauthorized users
+    if (!isAuthorized) {
+      navigateTo("/");
       return;
     }
 
     const fetchApplications = async () => {
       try {
-        const baseURL = import.meta.env.VITE_BASE_URL;
-
+        const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
         const endpoint =
-          user.role === "Employer"
+          user?.role === "Employer"
             ? "/api/v1/application/employer/getall"
             : "/api/v1/application/jobseeker/getall";
 
@@ -33,7 +33,7 @@ const MyApplications = () => {
           withCredentials: true,
         });
 
-        setApplications(data.applications);
+        setApplications(data.applications || []);
       } catch (error) {
         console.error("Error fetching applications:", error);
         toast.error(
@@ -43,12 +43,11 @@ const MyApplications = () => {
     };
 
     fetchApplications();
-  }, [user, navigateTo]);
+  }, [isAuthorized, user, navigateTo]);
 
   const deleteApplication = async (id) => {
     try {
-      const baseURL = import.meta.env.VITE_BASE_URL;
-
+      const baseURL = import.meta.env.VITE_BASE_URL ;
       const { data } = await axios.post(
         `${baseURL}/api/v1/application/delete/${id}`,
         {},
@@ -68,7 +67,7 @@ const MyApplications = () => {
   };
 
   const openModal = (imageUrl) => {
-    setResumeImageUrl(imageUrl || "");
+    setResumeImageUrl(imageUrl);
     setModalOpen(true);
   };
 
@@ -76,7 +75,7 @@ const MyApplications = () => {
     setModalOpen(false);
   };
 
-  if (!user) return null; // Avoid rendering if the user is undefined
+  if (!user) return null; // Ensure component doesn't render prematurely
 
   return (
     <section className="my_applications page">
@@ -86,7 +85,7 @@ const MyApplications = () => {
             ? "My Applications"
             : "Applications From Job Seekers"}
         </h1>
-        {applications.length <= 0 ? (
+        {applications.length === 0 ? (
           <h4>No Applications Found</h4>
         ) : (
           applications.map((element) =>
@@ -114,77 +113,75 @@ const MyApplications = () => {
 
 export default MyApplications;
 
-const JobSeekerCard = ({ element, deleteApplication, openModal }) => {
-  return (
-    <div className="job_seeker_card">
-      <div className="detail">
-        <p>
-          <span>Name:</span> {element.name || "N/A"}
-        </p>
-        <p>
-          <span>Email:</span> {element.email || "N/A"}
-        </p>
-        <p>
-          <span>Phone:</span> {element.phone || "N/A"}
-        </p>
-        <p>
-          <span>Address:</span> {element.address || "N/A"}
-        </p>
-        <p>
-          <span>CoverLetter:</span> {element.coverLetter || "N/A"}
-        </p>
-      </div>
-      <div className="resume">
-        {element.resume?.url ? (
-          <img
-            src={element.resume.url}
-            alt="resume"
-            onClick={() => openModal(element.resume.url)}
-          />
-        ) : (
-          <p>No Resume Available</p>
-        )}
-      </div>
-      <div className="btn_area">
-        <button onClick={() => deleteApplication(element._id)}>
-          Delete Application
-        </button>
-      </div>
+// Job Seeker Card
+const JobSeekerCard = ({ element, deleteApplication, openModal }) => (
+  <div className="job_seeker_card">
+    <div className="detail">
+      <p>
+        <span>Name:</span> {element.name || "N/A"}
+      </p>
+      <p>
+        <span>Email:</span> {element.email || "N/A"}
+      </p>
+      <p>
+        <span>Phone:</span> {element.phone || "N/A"}
+      </p>
+      <p>
+        <span>Address:</span> {element.address || "N/A"}
+      </p>
+      <p>
+        <span>CoverLetter:</span> {element.coverLetter || "N/A"}
+      </p>
     </div>
-  );
-};
+    <div className="resume">
+      {element.resume?.url ? (
+        <img
+          src={element.resume.url}
+          alt="resume"
+          onClick={() => openModal(element.resume.url)}
+        />
+      ) : (
+        <p>No Resume Available</p>
+      )}
+    </div>
+    <div className="btn_area">
+      <button onClick={() => deleteApplication(element._id)}>
+        Delete Application
+      </button>
+    </div>
+  </div>
+);
 
-const EmployerCard = ({ element, openModal }) => {
-  return (
-    <div className="job_seeker_card">
-      <div className="detail">
-        <p>
-          <span>Name:</span> {element.name || "N/A"}
-        </p>
-        <p>
-          <span>Email:</span> {element.email || "N/A"}
-        </p>
-        <p>
-          <span>Phone:</span> {element.phone || "N/A"}
-        </p>
-        <p>
-          <span>Address:</span> {element.address || "N/A"}
-        </p>
-        <p>
-          <span>CoverLetter:</span> {element.coverLetter || "N/A"}
-        </p>
-      </div>
-      <div className="resume">
-        {element.resume?.url ? (
-          <img
-            src={element.resume.url}
-            alt="resume"
-            onClick={() => openModal(element.resume.url)}
-          />
-        ) : (
-          <p>No Resume Available</p>
-        )}
-      </div>
+// Employer Card
+const EmployerCard = ({ element, openModal }) => (
+  <div className="job_seeker_card">
+    <div className="detail">
+      <p>
+        <span>Name:</span> {element.name || "N/A"}
+      </p>
+      <p>
+        <span>Email:</span> {element.email || "N/A"}
+      </p>
+      <p>
+        <span>Phone:</span> {element.phone || "N/A"}
+      </p>
+      <p>
+        <span>Address:</span> {element.address || "N/A"}
+      </p>
+      <p>
+        <span>CoverLetter:</span> {element.coverLetter || "N/A"}
+      </p>
     </div>
-  );
-};
+    <div className="resume">
+      {element.resume?.url ? (
+        <img
+          src={element.resume.url}
+          alt="resume"
+          onClick={() => openModal(element.resume.url)}
+        />
+      ) : (
+        <p>No Resume Available</p>
+      )}
+    </div>
+  </div>
+);
