@@ -23,8 +23,8 @@ const Login = () => {
     }
 
     try {
-      const baseURL = import.meta.env.VITE_BASE_URL;
-
+      const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
+    
       const { data } = await axios.post(
         `${baseURL}/api/v1/user/login`,
         { email, password, role },
@@ -35,92 +35,88 @@ const Login = () => {
           withCredentials: true,
         }
       );
-
+    
       toast.success(data.message);
       setEmail("");
       setPassword("");
       setRole("");
       setIsAuthorized(true);
     } catch (error) {
-      console.error("Error:", error);
-
-      if (error.response?.data?.message) {
+      console.error("Error:", error); // Log the entire error object for debugging
+    
+      if (error.response) {
+        // Handle errors with a valid response object
         toast.error(error.response.data.message || "An error occurred.");
       } else if (error.request) {
+        // Handle network errors (no response received)
         console.error("Network error:", error.request);
         toast.error("Network error. Please check your connection.");
       } else {
+        // Handle other errors
         toast.error(error.message || "Something went wrong.");
       }
     }
   };
 
   if (isAuthorized) {
-    return <Navigate to="/" />;
+    return <Navigate to={"/"} />;
   }
 
   return (
-    <section className="authPage">
-      <div className="container">
-        <div className="header">
-          <img src="/JobZeelogo.png" alt="JobZee Logo" />
-          <h3>Login to your account</h3>
+    <>
+      <section className="authPage">
+        <div className="container">
+          <div className="header">
+            <img src="/JobZeelogo.png" alt="logo" />
+            <h3>Login to your account</h3>
+          </div>
+          <form>
+            <div className="inputTag">
+              <label>Login As</label>
+              <div>
+                <select value={role} onChange={(e) => setRole(e.target.value)}>
+                  <option value="">Select Role</option>
+                  <option value="Employer">Employer</option>
+                  <option value="Job Seeker">Job Seeker</option>
+                </select>
+                <FaRegUser />
+              </div>
+            </div>
+            <div className="inputTag">
+              <label>Email Address</label>
+              <div>
+                <input
+                  type="email"
+                  placeholder="xyz@gmail.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <MdOutlineMailOutline />
+              </div>
+            </div>
+            <div className="inputTag">
+              <label>Password</label>
+              <div>
+                <input
+                  type="password"
+                  placeholder="Your Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <RiLock2Fill />
+              </div>
+            </div>
+            <button type="submit" onClick={handleLogin}>
+              Login
+            </button>
+            <Link to={"/register"}>Register Now</Link>
+          </form>
         </div>
-        <form onSubmit={handleLogin}>
-          <div className="inputTag">
-            <label htmlFor="role">Login As</label>
-            <div>
-              <select
-                id="role"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                required
-              >
-                <option value="" disabled>
-                  Select Role
-                </option>
-                <option value="Employer">Employer</option>
-                <option value="Job Seeker">Job Seeker</option>
-              </select>
-              <FaRegUser />
-            </div>
-          </div>
-          <div className="inputTag">
-            <label htmlFor="email">Email Address</label>
-            <div>
-              <input
-                id="email"
-                type="email"
-                placeholder="xyz@gmail.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <MdOutlineMailOutline />
-            </div>
-          </div>
-          <div className="inputTag">
-            <label htmlFor="password">Password</label>
-            <div>
-              <input
-                id="password"
-                type="password"
-                placeholder="Your Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <RiLock2Fill />
-            </div>
-          </div>
-          <button type="submit">Login</button>
-          <Link to="/register">Register Now</Link>
-        </form>
-      </div>
-      <div className="banner">
-        <img src="/login.png" alt="Login Banner" />
-      </div>
-    </section>
+        <div className="banner">
+          <img src="/login.png" alt="login" />
+        </div>
+      </section>
+    </>
   );
 };
 
