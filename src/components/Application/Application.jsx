@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import { Context } from "../../main";
@@ -14,17 +14,43 @@ const Application = () => {
 
   const { isAuthorized, user } = useContext(Context);
   const navigateTo = useNavigate();
+  const { id } = useParams();
 
-  // Function to handle file input changes
+  useEffect(() => {
+    if (!isAuthorized || (user && user.role === "Employer")) {
+      navigateTo("/"); // Redirect unauthorized users or employers
+    }
+  }, [isAuthorized, user, navigateTo]);
+
+  // Handle file input changes with type and size validation
   const handleFileChange = (event) => {
     const selectedResume = event.target.files[0];
-    setResume(selectedResume);
-  };
+    if (selectedResume) {
+      const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+      const maxFileSize = 5 * 1024 * 1024; // 5 MB
 
-  const { id } = useParams();
+      if (!allowedTypes.includes(selectedResume.type)) {
+        toast.error("Invalid file type. Please upload a PDF, JPG, or PNG file.");
+        return;
+      }
+
+      if (selectedResume.size > maxFileSize) {
+        toast.error("File size exceeds 5MB. Please upload a smaller file.");
+        return;
+      }
+
+      setResume(selectedResume);
+    }
+  };
 
   const handleApplication = async (e) => {
     e.preventDefault();
+
+    // Basic client-side validation
+    if (!name || !email || !phone || !address || !coverLetter || !resume) {
+      toast.error("Please fill out all required fields.");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("name", name);
@@ -36,8 +62,7 @@ const Application = () => {
     formData.append("jobId", id);
 
     try {
-      // Use Vite's environment variable for the base URL
-      const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
+      const baseURL = import.meta.env.VITE_BASE_URL;
 
       const { data } = await axios.post(
         `${baseURL}/api/v1/application/post`,
@@ -73,11 +98,6 @@ const Application = () => {
     }
   };
 
-  // Redirect unauthorized users or employers
-  if (!isAuthorized || (user && user.role === "Employer")) {
-    navigateTo("/");
-  }
-
   return (
     <section className="application">
       <div className="container">
@@ -88,29 +108,34 @@ const Application = () => {
             placeholder="Your Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            required
           />
           <input
             type="email"
             placeholder="Your Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
           />
           <input
             type="number"
             placeholder="Your Phone Number"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            required
           />
           <input
             type="text"
             placeholder="Your Address"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
+            required
           />
           <textarea
             placeholder="Cover Letter..."
             value={coverLetter}
             onChange={(e) => setCoverLetter(e.target.value)}
+            required
           />
           <div>
             <label
@@ -123,6 +148,7 @@ const Application = () => {
               accept=".pdf, .jpg, .png"
               onChange={handleFileChange}
               style={{ width: "100%" }}
+              required
             />
           </div>
           <button type="submit">Send Application</button>

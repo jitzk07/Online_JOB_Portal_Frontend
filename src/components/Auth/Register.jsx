@@ -22,8 +22,14 @@ const Register = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
 
+    // Client-side validation
     if (!name || !email || !phone || !password || !role) {
       toast.error("Please fill in all fields.");
+      return;
+    }
+
+    if (!/^[0-9]{10}$/.test(phone)) {
+      toast.error("Phone number must be 10 digits.");
       return;
     }
 
@@ -48,6 +54,7 @@ const Register = () => {
       );
 
       toast.success(data.message);
+      // Clear form inputs after successful registration
       setName("");
       setEmail("");
       setPassword("");
@@ -55,7 +62,7 @@ const Register = () => {
       setRole("");
       setIsAuthorized(true);
     } catch (error) {
-      console.error("Error:", error); // Debugging: Log the entire error object
+      console.error("Error:", error);
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else if (error.message) {
@@ -67,88 +74,99 @@ const Register = () => {
   };
 
   if (isAuthorized) {
-    return <Navigate to={'/'} />;
+    return <Navigate to="/" />;
   }
 
   return (
-    <>
-      <section className="authPage">
-        <div className="container">
-          <div className="header">
-            <img src="/JobZeelogo.png" alt="logo" />
-            <h3>Create a new account</h3>
+    <section className="authPage">
+      <div className="container">
+        <div className="header">
+          <img src="/JobZeelogo.png" alt="JobZee Logo" />
+          <h3>Create a new account</h3>
+        </div>
+        <form onSubmit={handleRegister}>
+          <div className="inputTag">
+            <label htmlFor="role">Register As</label>
+            <div>
+              <select
+                id="role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                required
+              >
+                <option value="" disabled>
+                  Select Role
+                </option>
+                <option value="Employer">Employer</option>
+                <option value="Job Seeker">Job Seeker</option>
+              </select>
+              <FaRegUser />
+            </div>
           </div>
-          <form>
-            <div className="inputTag">
-              <label>Register As</label>
-              <div>
-                <select value={role} onChange={(e) => setRole(e.target.value)}>
-                  <option value="">Select Role</option>
-                  <option value="Employer">Employer</option>
-                  <option value="Job Seeker">Job Seeker</option>
-                </select>
-                <FaRegUser />
-              </div>
+          <div className="inputTag">
+            <label htmlFor="name">Name</label>
+            <div>
+              <input
+                id="name"
+                type="text"
+                placeholder="Your Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+              <FaPencilAlt />
             </div>
-            <div className="inputTag">
-              <label>Name</label>
-              <div>
-                <input
-                  type="text"
-                  placeholder="Your Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-                <FaPencilAlt />
-              </div>
+          </div>
+          <div className="inputTag">
+            <label htmlFor="email">Email Address</label>
+            <div>
+              <input
+                id="email"
+                type="email"
+                placeholder="xyz@gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <MdOutlineMailOutline />
             </div>
-            <div className="inputTag">
-              <label>Email Address</label>
-              <div>
-                <input
-                  type="email"
-                  placeholder="xyz@gmail.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-                <MdOutlineMailOutline />
-              </div>
+          </div>
+          <div className="inputTag">
+            <label htmlFor="phone">Phone Number</label>
+            <div>
+              <input
+                id="phone"
+                type="tel"
+                placeholder="1234567890"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+              />
+              <FaPhoneFlip />
             </div>
-            <div className="inputTag">
-              <label>Phone Number</label>
-              <div>
-                <input
-                  type="number"
-                  placeholder="12345678"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-                <FaPhoneFlip />
-              </div>
+          </div>
+          <div className="inputTag">
+            <label htmlFor="password">Password</label>
+            <div>
+              <input
+                id="password"
+                type="password"
+                placeholder="Your Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <RiLock2Fill />
             </div>
-            <div className="inputTag">
-              <label>Password</label>
-              <div>
-                <input
-                  type="password"
-                  placeholder="Your Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <RiLock2Fill />
-              </div>
-            </div>
-            <button type="submit" onClick={handleRegister}>
-              Register
-            </button>
-            <Link to={"/login"}>Login Now</Link>
-          </form>
-        </div>
-        <div className="banner">
-          <img src="/register.png" alt="login" />
-        </div>
-      </section>
-    </>
+          </div>
+          <button type="submit">Register</button>
+          <Link to="/login">Login Now</Link>
+        </form>
+      </div>
+      <div className="banner">
+        <img src="/register.png" alt="Register Banner" />
+      </div>
+    </section>
   );
 };
 

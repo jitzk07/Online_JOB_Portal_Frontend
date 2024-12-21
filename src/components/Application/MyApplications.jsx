@@ -12,50 +12,42 @@ const MyApplications = () => {
   const [applications, setApplications] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [resumeImageUrl, setResumeImageUrl] = useState("");
-
-  const { isAuthorized } = useContext(Context);
   const navigateTo = useNavigate();
 
   useEffect(() => {
+    if (!user) {
+      navigateTo("/"); // Redirect if the user is not logged in
+      return;
+    }
+
     const fetchApplications = async () => {
       try {
-        const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
+        const baseURL = import.meta.env.VITE_BASE_URL;
 
-        if (user && user.role === "Employer") {
-          const { data } = await axios.get(
-            `${baseURL}/api/v1/application/employer/getall`,
-            { withCredentials: true }
-          );
-          setApplications(data.applications);
-        } else {
-          const { data } = await axios.get(
-            `${baseURL}/api/v1/application/jobseeker/getall`,
-            { withCredentials: true }
-          );
-          setApplications(data.applications);
-        }
+        const endpoint =
+          user.role === "Employer"
+            ? "/api/v1/application/employer/getall"
+            : "/api/v1/application/jobseeker/getall";
+
+        const { data } = await axios.get(`${baseURL}${endpoint}`, {
+          withCredentials: true,
+        });
+
+        setApplications(data.applications);
       } catch (error) {
         console.error("Error fetching applications:", error);
-        if (error.response?.data?.message) {
-          toast.error(error.response.data.message);
-        } else if (error.message) {
-          toast.error(error.message);
-        } else {
-          toast.error("Something went wrong.");
-        }
+        toast.error(
+          error.response?.data?.message || error.message || "Something went wrong."
+        );
       }
     };
 
     fetchApplications();
-  }, [user, isAuthorized]);
-
-  if (!isAuthorized) {
-    navigateTo("/");
-  }
+  }, [user, navigateTo]);
 
   const deleteApplication = async (id) => {
     try {
-      const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
+      const baseURL = import.meta.env.VITE_BASE_URL;
 
       const { data } = await axios.post(
         `${baseURL}/api/v1/application/delete/${id}`,
@@ -69,18 +61,14 @@ const MyApplications = () => {
       );
     } catch (error) {
       console.error("Error deleting application:", error);
-      if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else if (error.message) {
-        toast.error(error.message);
-      } else {
-        toast.error("Something went wrong.");
-      }
+      toast.error(
+        error.response?.data?.message || error.message || "Something went wrong."
+      );
     }
   };
 
   const openModal = (imageUrl) => {
-    setResumeImageUrl(imageUrl);
+    setResumeImageUrl(imageUrl || "");
     setModalOpen(true);
   };
 
@@ -88,43 +76,38 @@ const MyApplications = () => {
     setModalOpen(false);
   };
 
+  if (!user) return null; // Avoid rendering if the user is undefined
+
   return (
     <section className="my_applications page">
-      {user && user.role === "Job Seeker" ? (
-        <div className="container">
-          <h1>My Applications</h1>
-          {applications.length <= 0 ? (
-            <h4>No Applications Found</h4>
-          ) : (
-            applications.map((element) => (
+      <div className="container">
+        <h1>
+          {user.role === "Job Seeker"
+            ? "My Applications"
+            : "Applications From Job Seekers"}
+        </h1>
+        {applications.length <= 0 ? (
+          <h4>No Applications Found</h4>
+        ) : (
+          applications.map((element) =>
+            user.role === "Job Seeker" ? (
               <JobSeekerCard
-                element={element}
                 key={element._id}
+                element={element}
                 deleteApplication={deleteApplication}
                 openModal={openModal}
               />
-            ))
-          )}
-        </div>
-      ) : (
-        <div className="container">
-          <h1>Applications From Job Seekers</h1>
-          {applications.length <= 0 ? (
-            <h4>No Applications Found</h4>
-          ) : (
-            applications.map((element) => (
+            ) : (
               <EmployerCard
-                element={element}
                 key={element._id}
+                element={element}
                 openModal={openModal}
               />
-            ))
-          )}
-        </div>
-      )}
-      {modalOpen && (
-        <ResumeModal imageUrl={resumeImageUrl} onClose={closeModal} />
-      )}
+            )
+          )
+        )}
+      </div>
+      {modalOpen && <ResumeModal imageUrl={resumeImageUrl} onClose={closeModal} />}
     </section>
   );
 };
@@ -136,27 +119,31 @@ const JobSeekerCard = ({ element, deleteApplication, openModal }) => {
     <div className="job_seeker_card">
       <div className="detail">
         <p>
-          <span>Name:</span> {element.name}
+          <span>Name:</span> {element.name || "N/A"}
         </p>
         <p>
-          <span>Email:</span> {element.email}
+          <span>Email:</span> {element.email || "N/A"}
         </p>
         <p>
-          <span>Phone:</span> {element.phone}
+          <span>Phone:</span> {element.phone || "N/A"}
         </p>
         <p>
-          <span>Address:</span> {element.address}
+          <span>Address:</span> {element.address || "N/A"}
         </p>
         <p>
-          <span>CoverLetter:</span> {element.coverLetter}
+          <span>CoverLetter:</span> {element.coverLetter || "N/A"}
         </p>
       </div>
       <div className="resume">
-        <img
-          src={element.resume.url}
-          alt="resume"
-          onClick={() => openModal(element.resume.url)}
-        />
+        {element.resume?.url ? (
+          <img
+            src={element.resume.url}
+            alt="resume"
+            onClick={() => openModal(element.resume.url)}
+          />
+        ) : (
+          <p>No Resume Available</p>
+        )}
       </div>
       <div className="btn_area">
         <button onClick={() => deleteApplication(element._id)}>
@@ -172,27 +159,31 @@ const EmployerCard = ({ element, openModal }) => {
     <div className="job_seeker_card">
       <div className="detail">
         <p>
-          <span>Name:</span> {element.name}
+          <span>Name:</span> {element.name || "N/A"}
         </p>
         <p>
-          <span>Email:</span> {element.email}
+          <span>Email:</span> {element.email || "N/A"}
         </p>
         <p>
-          <span>Phone:</span> {element.phone}
+          <span>Phone:</span> {element.phone || "N/A"}
         </p>
         <p>
-          <span>Address:</span> {element.address}
+          <span>Address:</span> {element.address || "N/A"}
         </p>
         <p>
-          <span>CoverLetter:</span> {element.coverLetter}
+          <span>CoverLetter:</span> {element.coverLetter || "N/A"}
         </p>
       </div>
       <div className="resume">
-        <img
-          src={element.resume.url}
-          alt="resume"
-          onClick={() => openModal(element.resume.url)}
-        />
+        {element.resume?.url ? (
+          <img
+            src={element.resume.url}
+            alt="resume"
+            onClick={() => openModal(element.resume.url)}
+          />
+        ) : (
+          <p>No Resume Available</p>
+        )}
       </div>
     </div>
   );
