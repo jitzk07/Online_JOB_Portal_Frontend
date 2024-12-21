@@ -12,7 +12,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
+      const baseURL = import.meta.env.VITE_BASE_URL ;
 
       const response = await axios.get(`${baseURL}/api/v1/user/logout`, {
         withCredentials: true,

@@ -35,7 +35,7 @@ const PostJob = () => {
     }
 
     try {
-      const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
+      const baseURL = import.meta.env.VITE_BASE_URL ;
 
       // Prepare job data based on salary type
       const jobData =

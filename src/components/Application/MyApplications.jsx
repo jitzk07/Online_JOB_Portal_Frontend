@@ -19,7 +19,7 @@ const MyApplications = () => {
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
+        const baseURL = import.meta.env.VITE_BASE_URL ;
 
         if (user && user.role === "Employer") {
           const { data } = await axios.get(
@@ -55,7 +55,7 @@ const MyApplications = () => {
 
   const deleteApplication = async (id) => {
     try {
-      const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
+      const baseURL = import.meta.env.VITE_BASE_URL ;
 
       const { data } = await axios.post(
         `${baseURL}/api/v1/application/delete/${id}`,

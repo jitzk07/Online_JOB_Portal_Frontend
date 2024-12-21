@@ -37,7 +37,7 @@ const Application = () => {
 
     try {
       // Use Vite's environment variable for the base URL
-      const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
+      const baseURL = import.meta.env.VITE_BASE_URL ;
 
       const { data } = await axios.post(
         `${baseURL}/api/v1/application/post`,

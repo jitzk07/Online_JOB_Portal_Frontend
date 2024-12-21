@@ -16,7 +16,7 @@ const JobDetails = () => {
   useEffect(() => {
     const fetchJobDetails = async () => {
       try {
-        const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
+        const baseURL = import.meta.env.VITE_BASE_URL ;
         const { data } = await axios.get(`${baseURL}/api/v1/job/${id}`, {
           withCredentials: true,
         });
