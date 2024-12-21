@@ -11,8 +11,9 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
+  const [loading, setLoading] = useState(false); // To handle login request state
 
-  const { isAuthorized, setIsAuthorized } = useContext(Context);
+  const { isAuthorized, setIsAuthorized, setUser } = useContext(Context);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -23,8 +24,9 @@ const Login = () => {
     }
 
     try {
-      const baseURL = import.meta.env.VITE_BASE_URL ;
-    
+      setLoading(true);
+      const baseURL = import.meta.env.VITE_BASE_URL;
+
       const { data } = await axios.post(
         `${baseURL}/api/v1/user/login`,
         { email, password, role },
@@ -35,26 +37,33 @@ const Login = () => {
           withCredentials: true,
         }
       );
-    
+
       toast.success(data.message);
+
+      // Fetch user data after successful login
+      const userResponse = await axios.get(`${baseURL}/api/v1/user/getuser`, {
+        withCredentials: true,
+      });
+
+      setUser(userResponse.data.user); // Update user in context
+      setIsAuthorized(true);
+
+      // Clear form fields
       setEmail("");
       setPassword("");
       setRole("");
-      setIsAuthorized(true);
     } catch (error) {
-      console.error("Error:", error); // Log the entire error object for debugging
-    
+      console.error("Error:", error);
+
       if (error.response) {
-        // Handle errors with a valid response object
         toast.error(error.response.data.message || "An error occurred.");
       } else if (error.request) {
-        // Handle network errors (no response received)
-        console.error("Network error:", error.request);
         toast.error("Network error. Please check your connection.");
       } else {
-        // Handle other errors
         toast.error(error.message || "Something went wrong.");
       }
+    } finally {
+      setLoading(false); // Reset loading state
     }
   };
 
@@ -106,8 +115,8 @@ const Login = () => {
                 <RiLock2Fill />
               </div>
             </div>
-            <button type="submit" onClick={handleLogin}>
-              Login
+            <button type="submit" onClick={handleLogin} disabled={loading}>
+              {loading ? "Logging in..." : "Login"}
             </button>
             <Link to={"/register"}>Register Now</Link>
           </form>

@@ -12,9 +12,10 @@ const MyApplications = () => {
   const [applications, setApplications] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [resumeImageUrl, setResumeImageUrl] = useState("");
-  const [loading, setLoading] = useState(true); // Loading state to manage fetch lifecycle
+  const [loading, setLoading] = useState(true); // Loading state for initial data fetching
   const navigateTo = useNavigate();
 
+  // Fetch applications based on role
   useEffect(() => {
     const fetchApplications = async () => {
       try {
@@ -32,31 +33,33 @@ const MyApplications = () => {
             { withCredentials: true }
           );
           setApplications(data.applications);
+        } else {
+          // If the user role is invalid, navigate to home
+          navigateTo("/");
         }
       } catch (error) {
         console.error("Error fetching applications:", error);
         toast.error(
-          error.response?.data?.message ||
-            error.message ||
-            "Something went wrong."
+          error.response?.data?.message || error.message || "Something went wrong."
         );
       } finally {
-        setLoading(false); // End loading after fetch
+        setLoading(false); // End loading
       }
     };
 
-    if (isAuthorized) {
+    if (user && isAuthorized) {
       fetchApplications();
     } else {
-      setLoading(false); // Skip fetch if unauthorized
+      setLoading(false); // Skip fetching if not authorized
     }
-  }, [user, isAuthorized]);
+  }, [user, isAuthorized, navigateTo]);
 
+  // Handle navigation for unauthorized access
   useEffect(() => {
-    if (!isAuthorized && !loading) {
-      navigateTo("/");
+    if (!user && !loading) {
+      navigateTo("/"); // Redirect if user is not present after loading
     }
-  }, [isAuthorized, loading, navigateTo]);
+  }, [user, loading, navigateTo]);
 
   const deleteApplication = async (id) => {
     try {
@@ -75,9 +78,7 @@ const MyApplications = () => {
     } catch (error) {
       console.error("Error deleting application:", error);
       toast.error(
-        error.response?.data?.message ||
-          error.message ||
-          "Something went wrong."
+        error.response?.data?.message || error.message || "Something went wrong."
       );
     }
   };
@@ -91,10 +92,12 @@ const MyApplications = () => {
     setModalOpen(false);
   };
 
+  // Display loading indicator until the fetch is complete
   if (loading) {
-    return <p>Loading...</p>; // Display loading indicator during fetch
+    return <p>Loading...</p>;
   }
 
+  // Render applications or redirect if user data is invalid
   return (
     <section className="my_applications page">
       {user?.role === "Job Seeker" ? (
@@ -113,7 +116,7 @@ const MyApplications = () => {
             ))
           )}
         </div>
-      ) : (
+      ) : user?.role === "Employer" ? (
         <div className="container">
           <h1>Applications From Job Seekers</h1>
           {applications.length === 0 ? (
@@ -128,6 +131,8 @@ const MyApplications = () => {
             ))
           )}
         </div>
+      ) : (
+        <p>Invalid Role</p>
       )}
       {modalOpen && (
         <ResumeModal imageUrl={resumeImageUrl} onClose={closeModal} />
