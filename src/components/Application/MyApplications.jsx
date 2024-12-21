@@ -8,26 +8,25 @@ import { useNavigate } from "react-router-dom";
 import ResumeModal from "./ResumeModal";
 
 const MyApplications = () => {
-  const { user } = useContext(Context);
+  const { user, isAuthorized } = useContext(Context);
   const [applications, setApplications] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [resumeImageUrl, setResumeImageUrl] = useState("");
-
-  const { isAuthorized } = useContext(Context);
+  const [loading, setLoading] = useState(true); // Loading state to manage fetch lifecycle
   const navigateTo = useNavigate();
 
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        const baseURL = import.meta.env.VITE_BASE_URL ;
+        const baseURL = import.meta.env.VITE_BASE_URL;
 
-        if (user && user.role === "Employer") {
+        if (user?.role === "Employer") {
           const { data } = await axios.get(
             `${baseURL}/api/v1/application/employer/getall`,
             { withCredentials: true }
           );
           setApplications(data.applications);
-        } else {
+        } else if (user?.role === "Job Seeker") {
           const { data } = await axios.get(
             `${baseURL}/api/v1/application/jobseeker/getall`,
             { withCredentials: true }
@@ -36,26 +35,32 @@ const MyApplications = () => {
         }
       } catch (error) {
         console.error("Error fetching applications:", error);
-        if (error.response?.data?.message) {
-          toast.error(error.response.data.message);
-        } else if (error.message) {
-          toast.error(error.message);
-        } else {
-          toast.error("Something went wrong.");
-        }
+        toast.error(
+          error.response?.data?.message ||
+            error.message ||
+            "Something went wrong."
+        );
+      } finally {
+        setLoading(false); // End loading after fetch
       }
     };
 
-    fetchApplications();
+    if (isAuthorized) {
+      fetchApplications();
+    } else {
+      setLoading(false); // Skip fetch if unauthorized
+    }
   }, [user, isAuthorized]);
 
-  if (!isAuthorized) {
-    navigateTo("/");
-  }
+  useEffect(() => {
+    if (!isAuthorized && !loading) {
+      navigateTo("/");
+    }
+  }, [isAuthorized, loading, navigateTo]);
 
   const deleteApplication = async (id) => {
     try {
-      const baseURL = import.meta.env.VITE_BASE_URL ;
+      const baseURL = import.meta.env.VITE_BASE_URL;
 
       const { data } = await axios.post(
         `${baseURL}/api/v1/application/delete/${id}`,
@@ -69,13 +74,11 @@ const MyApplications = () => {
       );
     } catch (error) {
       console.error("Error deleting application:", error);
-      if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else if (error.message) {
-        toast.error(error.message);
-      } else {
-        toast.error("Something went wrong.");
-      }
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Something went wrong."
+      );
     }
   };
 
@@ -88,12 +91,16 @@ const MyApplications = () => {
     setModalOpen(false);
   };
 
+  if (loading) {
+    return <p>Loading...</p>; // Display loading indicator during fetch
+  }
+
   return (
     <section className="my_applications page">
-      {user && user.role === "Job Seeker" ? (
+      {user?.role === "Job Seeker" ? (
         <div className="container">
           <h1>My Applications</h1>
-          {applications.length <= 0 ? (
+          {applications.length === 0 ? (
             <h4>No Applications Found</h4>
           ) : (
             applications.map((element) => (
@@ -109,7 +116,7 @@ const MyApplications = () => {
       ) : (
         <div className="container">
           <h1>Applications From Job Seekers</h1>
-          {applications.length <= 0 ? (
+          {applications.length === 0 ? (
             <h4>No Applications Found</h4>
           ) : (
             applications.map((element) => (
@@ -148,7 +155,7 @@ const JobSeekerCard = ({ element, deleteApplication, openModal }) => {
           <span>Address:</span> {element.address}
         </p>
         <p>
-          <span>CoverLetter:</span> {element.coverLetter}
+          <span>Cover Letter:</span> {element.coverLetter}
         </p>
       </div>
       <div className="resume">
@@ -184,7 +191,7 @@ const EmployerCard = ({ element, openModal }) => {
           <span>Address:</span> {element.address}
         </p>
         <p>
-          <span>CoverLetter:</span> {element.coverLetter}
+          <span>Cover Letter:</span> {element.coverLetter}
         </p>
       </div>
       <div className="resume">

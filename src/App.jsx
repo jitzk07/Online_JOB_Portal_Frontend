@@ -1,7 +1,7 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import "./App.css";
 import { Context } from "./main";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Register";
 import { Toaster } from "react-hot-toast";
@@ -18,12 +18,12 @@ import NotFound from "./components/NotFound/NotFound";
 import MyJobs from "./components/Job/MyJobs";
 
 const App = () => {
-  const {  setIsAuthorized, setUser } = useContext(Context);
+  const { setIsAuthorized, setUser, isAuthorized, user } = useContext(Context);
+  const [loading, setLoading] = useState(true); // Manage loading state
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // Get the base URL from environment variables
         const baseURL = import.meta.env.VITE_BASE_URL;
 
         // Configure Axios globally for credentials
@@ -42,27 +42,55 @@ const App = () => {
 
         // Handle unauthorized state
         setIsAuthorized(false);
+      } finally {
+        setLoading(false); // Set loading to false after fetch completes
       }
     };
 
     fetchUser();
-    // Only fetch user on component mount
-    // Removed unnecessary dependencies
   }, [setIsAuthorized, setUser]);
+
+  // If loading, show a spinner or loading text
+  if (loading) {
+    return <p>Loading...</p>;
+  }
 
   return (
     <BrowserRouter>
       <Navbar />
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        {/* Public Routes */}
+        <Route
+          path="/login"
+          element={!isAuthorized ? <Login /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/register"
+          element={!isAuthorized ? <Register /> : <Navigate to="/" />}
+        />
+
+        {/* Protected Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/job/getall" element={<Jobs />} />
         <Route path="/job/:id" element={<JobDetails />} />
-        <Route path="/application/:id" element={<Application />} />
-        <Route path="/applications/me" element={<MyApplications />} />
-        <Route path="/job/post" element={<PostJob />} />
-        <Route path="/job/me" element={<MyJobs />} />
+        <Route
+          path="/application/:id"
+          element={user?.role === "Employer" ? <Application /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/applications/me"
+          element={user?.role === "Job Seeker" ? <MyApplications /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/job/post"
+          element={user?.role === "Employer" ? <PostJob /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/job/me"
+          element={user?.role === "Employer" ? <MyJobs /> : <Navigate to="/" />}
+        />
+
+        {/* Fallback Route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
