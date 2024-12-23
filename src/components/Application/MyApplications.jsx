@@ -93,9 +93,9 @@ const MyApplications = () => {
   };
 
   // Display loading indicator until the fetch is complete
-  if (loading) {
-    return <p>Loading...</p>;
-  }
+  // if (loading) {
+  //   return <p>Loading...</p>;
+  // }
 
   // Render applications or redirect if user data is invalid
   return (
