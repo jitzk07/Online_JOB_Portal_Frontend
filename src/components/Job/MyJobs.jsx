@@ -13,20 +13,16 @@ const MyJobs = () => {
   const { isAuthorized, user } = useContext(Context);
   const navigateTo = useNavigate();
 
-  // Fetch jobs
+  // Fetching all jobs
   useEffect(() => {
-    if (!isAuthorized || (user && user.role !== "Employer")) {
-      navigateTo("/");
-      return;
-    }
-
     const fetchJobs = async () => {
       try {
-        const baseURL = import.meta.env.VITE_BASE_URL;
+        const baseURL = import.meta.env.VITE_BASE_URL ;
+
         const { data } = await axios.get(`${baseURL}/api/v1/job/getmyjobs`, {
           withCredentials: true,
         });
-        setMyJobs(data.myJobs || []);
+        setMyJobs(data.myJobs);
       } catch (error) {
         console.error("Error fetching jobs:", error);
         toast.error(error.response?.data?.message || "Something went wrong.");
@@ -35,7 +31,11 @@ const MyJobs = () => {
     };
 
     fetchJobs();
-  }, [isAuthorized, user, navigateTo]);
+  }, []);
+
+  if (!isAuthorized || (user && user.role !== "Employer")) {
+    navigateTo("/");
+  }
 
   // Enable editing mode
   const handleEnableEdit = (jobId) => {
@@ -51,17 +51,15 @@ const MyJobs = () => {
   const handleUpdateJob = async (jobId) => {
     const updatedJob = myJobs.find((job) => job._id === jobId);
 
-    if (!updatedJob) {
-      toast.error("Job not found!");
-      return;
-    }
-
     try {
-      const baseURL = import.meta.env.VITE_BASE_URL;
+      const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
+
       const { data } = await axios.post(
         `${baseURL}/api/v1/job/update/${jobId}`,
         updatedJob,
-        { withCredentials: true }
+        {
+          withCredentials: true,
+        }
       );
 
       toast.success(data.message);
@@ -75,11 +73,14 @@ const MyJobs = () => {
   // Delete job
   const handleDeleteJob = async (jobId) => {
     try {
-      const baseURL = import.meta.env.VITE_BASE_URL;
+      const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
+
       const { data } = await axios.post(
         `${baseURL}/api/v1/job/delete/${jobId}`,
         {},
-        { withCredentials: true }
+        {
+          withCredentials: true,
+        }
       );
 
       toast.success(data.message);
@@ -105,18 +106,18 @@ const MyJobs = () => {
         <h1>Your Posted Jobs</h1>
         {myJobs.length > 0 ? (
           <div className="banner">
-            {myJobs.map((job) => (
-              <div className="card" key={job._id}>
+            {myJobs.map((element) => (
+              <div className="card" key={element._id}>
                 <div className="content">
                   <div className="short_fields">
                     <div>
                       <span>Title:</span>
                       <input
                         type="text"
-                        disabled={editingMode !== job._id}
-                        value={job.title || ""}
+                        disabled={editingMode !== element._id}
+                        value={element.title}
                         onChange={(e) =>
-                          handleInputChange(job._id, "title", e.target.value)
+                          handleInputChange(element._id, "title", e.target.value)
                         }
                       />
                     </div>
@@ -124,10 +125,14 @@ const MyJobs = () => {
                       <span>Country:</span>
                       <input
                         type="text"
-                        disabled={editingMode !== job._id}
-                        value={job.country || ""}
+                        disabled={editingMode !== element._id}
+                        value={element.country}
                         onChange={(e) =>
-                          handleInputChange(job._id, "country", e.target.value)
+                          handleInputChange(
+                            element._id,
+                            "country",
+                            e.target.value
+                          )
                         }
                       />
                     </div>
@@ -135,24 +140,29 @@ const MyJobs = () => {
                       <span>City:</span>
                       <input
                         type="text"
-                        disabled={editingMode !== job._id}
-                        value={job.city || ""}
+                        disabled={editingMode !== element._id}
+                        value={element.city}
                         onChange={(e) =>
-                          handleInputChange(job._id, "city", e.target.value)
+                          handleInputChange(element._id, "city", e.target.value)
                         }
                       />
                     </div>
                     <div>
                       <span>Category:</span>
                       <select
-                        value={job.category || ""}
+                        value={element.category}
                         onChange={(e) =>
-                          handleInputChange(job._id, "category", e.target.value)
+                          handleInputChange(
+                            element._id,
+                            "category",
+                            e.target.value
+                          )
                         }
-                        disabled={editingMode !== job._id}
+                        disabled={editingMode !== element._id}
                       >
-                        <option value="">Select Category</option>
-                        <option value="Graphics & Design">Graphics & Design</option>
+                        <option value="Graphics & Design">
+                          Graphics & Design
+                        </option>
                         <option value="Mobile App Development">
                           Mobile App Development
                         </option>
@@ -182,14 +192,14 @@ const MyJobs = () => {
                     </div>
                     <div>
                       <span>Salary:</span>
-                      {job.fixedSalary ? (
+                      {element.fixedSalary ? (
                         <input
                           type="number"
-                          disabled={editingMode !== job._id}
-                          value={job.fixedSalary || 0}
+                          disabled={editingMode !== element._id}
+                          value={element.fixedSalary}
                           onChange={(e) =>
                             handleInputChange(
-                              job._id,
+                              element._id,
                               "fixedSalary",
                               e.target.value
                             )
@@ -199,11 +209,11 @@ const MyJobs = () => {
                         <div>
                           <input
                             type="number"
-                            disabled={editingMode !== job._id}
-                            value={job.salaryFrom || 0}
+                            disabled={editingMode !== element._id}
+                            value={element.salaryFrom}
                             onChange={(e) =>
                               handleInputChange(
-                                job._id,
+                                element._id,
                                 "salaryFrom",
                                 e.target.value
                               )
@@ -211,11 +221,11 @@ const MyJobs = () => {
                           />
                           <input
                             type="number"
-                            disabled={editingMode !== job._id}
-                            value={job.salaryTo || 0}
+                            disabled={editingMode !== element._id}
+                            value={element.salaryTo}
                             onChange={(e) =>
                               handleInputChange(
-                                job._id,
+                                element._id,
                                 "salaryTo",
                                 e.target.value
                               )
@@ -224,18 +234,50 @@ const MyJobs = () => {
                         </div>
                       )}
                     </div>
+                    <div>
+                      <span>Expired:</span>
+                      <select
+                        value={element.expired}
+                        onChange={(e) =>
+                          handleInputChange(
+                            element._id,
+                            "expired",
+                            e.target.value
+                          )
+                        }
+                        disabled={editingMode !== element._id}
+                      >
+                        <option value={true}>TRUE</option>
+                        <option value={false}>FALSE</option>
+                      </select>
+                    </div>
                   </div>
                   <div className="long_field">
                     <div>
                       <span>Description:</span>
                       <textarea
                         rows={5}
-                        value={job.description || ""}
-                        disabled={editingMode !== job._id}
+                        value={element.description}
+                        disabled={editingMode !== element._id}
                         onChange={(e) =>
                           handleInputChange(
-                            job._id,
+                            element._id,
                             "description",
+                            e.target.value
+                          )
+                        }
+                      />
+                    </div>
+                    <div>
+                      <span>Location: </span>
+                      <textarea
+                        value={element.location}
+                        rows={5}
+                        disabled={editingMode !== element._id}
+                        onChange={(e) =>
+                          handleInputChange(
+                            element._id,
+                            "location",
                             e.target.value
                           )
                         }
@@ -245,10 +287,10 @@ const MyJobs = () => {
                 </div>
                 <div className="button_wrapper">
                   <div className="edit_btn_wrapper">
-                    {editingMode === job._id ? (
+                    {editingMode === element._id ? (
                       <>
                         <button
-                          onClick={() => handleUpdateJob(job._id)}
+                          onClick={() => handleUpdateJob(element._id)}
                           className="check_btn"
                         >
                           <FaCheck />
@@ -262,7 +304,7 @@ const MyJobs = () => {
                       </>
                     ) : (
                       <button
-                        onClick={() => handleEnableEdit(job._id)}
+                        onClick={() => handleEnableEdit(element._id)}
                         className="edit_btn"
                       >
                         Edit
@@ -270,7 +312,7 @@ const MyJobs = () => {
                     )}
                   </div>
                   <button
-                    onClick={() => handleDeleteJob(job._id)}
+                    onClick={() => handleDeleteJob(element._id)}
                     className="delete_btn"
                   >
                     Delete
@@ -281,7 +323,7 @@ const MyJobs = () => {
           </div>
         ) : (
           <p>
-            You've not posted any jobs or maybe you deleted all of your jobs!
+            You've not posted any job or maybe you deleted all of your jobs!
           </p>
         )}
       </div>

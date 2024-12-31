@@ -12,7 +12,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      const baseURL = import.meta.env.VITE_BASE_URL;
+      const baseURL = import.meta.env.VITE_BASE_URL ;
 
       const response = await axios.get(`${baseURL}/api/v1/user/logout`, {
         withCredentials: true,
@@ -24,6 +24,7 @@ const Navbar = () => {
     } catch (error) {
       console.error("Error during logout:", error);
       toast.error(error.response?.data?.message || "Something went wrong.");
+      setIsAuthorized(true);
     }
   };
 
@@ -31,48 +32,44 @@ const Navbar = () => {
     <nav className={isAuthorized ? "navbarShow" : "navbarHide"}>
       <div className="container">
         <div className="logo">
-          <img src="/JobZee-logos__white.png" alt="JobZee Logo" />
+          <img src="/JobZee-logos__white.png" alt="logo" />
         </div>
-        <ul className={`menu ${show ? "show-menu" : ""}`}>
+        <ul className={!show ? "menu" : "show-menu menu"}>
           <li>
-            <Link to="/" onClick={() => setShow(false)}>
+            <Link to={"/"} onClick={() => setShow(false)}>
               HOME
             </Link>
           </li>
           <li>
-            <Link to="/job/getall" onClick={() => setShow(false)}>
+            <Link to={"/job/getall"} onClick={() => setShow(false)}>
               ALL JOBS
             </Link>
           </li>
           <li>
-            <Link to="/applications/me" onClick={() => setShow(false)}>
+            <Link to={"/applications/me"} onClick={() => setShow(false)}>
               {user && user.role === "Employer"
                 ? "APPLICANT'S APPLICATIONS"
                 : "MY APPLICATIONS"}
             </Link>
           </li>
-          {user && user.role === "Employer" && (
+          {user && user.role === "Employer" ? (
             <>
               <li>
-                <Link to="/job/post" onClick={() => setShow(false)}>
+                <Link to={"/job/post"} onClick={() => setShow(false)}>
                   POST NEW JOB
                 </Link>
               </li>
               <li>
-                <Link to="/job/me" onClick={() => setShow(false)}>
+                <Link to={"/job/me"} onClick={() => setShow(false)}>
                   VIEW YOUR JOBS
                 </Link>
               </li>
             </>
-          )}
-          <li>
-            <button onClick={handleLogout} className="logout-btn">
-              LOGOUT
-            </button>
-          </li>
+          ) : null}
+          <button onClick={handleLogout}>LOGOUT</button>
         </ul>
         <div className="hamburger">
-          <GiHamburgerMenu onClick={() => setShow((prev) => !prev)} />
+          <GiHamburgerMenu onClick={() => setShow(!show)} />
         </div>
       </div>
     </nav>
